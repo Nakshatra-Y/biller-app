@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}Completed Bills - Cafe POS{% endblock %}
+
+{% block content %}
+<section class="list-page">
+    <div class="page-header">
+        <h1>Completed Bills</h1>
+        <p>History of closed bills. Staff can view and print; admins can also edit.</p>
+    </div>
+    <div class="card">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Bill ID</th>
+                    <th>Table</th>
+                    <th>Total</th>
+                    <th>Completed at</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for b in bills %}
+                <tr data-bill-id="{{ b.id }}">
+                    <td>#{{ b.id }}</td>
+                    <td>{{ b.table_no }}</td>
+                    <td>₹{{ '%.2f'|format(b.total) }}</td>
+                    <td>{{ (b.completed_at or b.created_at).strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td>
+                        <button class="btn btn-small btn-secondary js-print-receipt" data-id="{{ b.id }}">Print</button>
+                        {% if current_user.role == 'admin' %}
+                        <button class="btn btn-small btn-primary js-edit-bill-completed" data-id="{{ b.id }}">Edit</button>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="empty-state">No completed bills yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<div id="billModal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content modal-content-wide">
+        <h2 id="billModalTitle">Bill details</h2>
+        <div id="billModalBody"></div>
+        <div id="billModalEditable" class="hidden">
+            <table class="data-table">
+                <thead><tr><th>Item</th><th>Qty</th><th>Subtotal</th><th></th></tr></thead>
+                <tbody id="billModalItemsBody"></tbody>
+            </table>
+            <div style="margin-top:10px;">
+                <label>Add Item</label>
+              
+                <select id="modalAddCategory" class="field-input">
+                  <option value="">Category</option>
+                  {% for c in categories %}
+                  <option value="{{ c.id }}">{{ c.name }}</option>
+                  {% endfor %}
+                </select>
+              
+                <select id="modalAddProduct" class="field-input" style="margin-top:6px;">
+                  <option value="">Product</option>
+                  {% for p in products %}
+                  <option value="{{ p.id }}"
+                          data-name="{{ p.name }}"
+                          data-price="{{ p.price }}"
+                          data-category="{{ p.category_id }}">
+                    {{ p.name }} – ₹{{ p.price }}
+                  </option>
+                  {% endfor %}
+                </select>
+              
+                <button id="modalAddItemBtn" class="btn btn-primary" style="margin-top:6px;">Add</button>
+              </div>
+            <div class="bill-total-row bill-total" style="margin-top:8px;"><span>Total</span><span id="billModalTotal">₹0.00</span></div>
+            <div class="modal-actions">
+                <button id="billModalSave" class="btn btn-primary">Save changes</button>
+            </div>
+        </div>
+        <div id="billModalViewOnly" class="hidden">
+            <div id="billModalViewContent"></div>
+            <div class="modal-actions">
+                <button id="billModalPrint" class="btn btn-secondary">Print receipt</button>
+            </div>
+        </div>
+        <button id="closeBillModal" class="btn btn-secondary" style="margin-top:8px;">Close</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  window.POS_PAGE = 'completed';
+  window.POS_IS_ADMIN = {{ 'true' if current_user.role == 'admin' else 'false' }};
+</script>
+<script src="{{ url_for('static', filename='js/billing.js') }}"></script>
+{% endblock %}
+

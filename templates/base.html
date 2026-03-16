@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Cafe POS{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="app-shell">
+        {% if current_user %}
+        <header class="top-nav">
+            <div class="nav-left">
+                <div class="logo-circle">☕</div>
+                <div class="business-name">
+                    {{ current_user.business.name if current_user.business else "Cafe POS" }}
+                </div>
+            </div>
+            <nav class="nav-right">
+                <a href="{{ url_for('bills.dashboard') }}" class="nav-link">Dashboard</a>
+                <a href="{{ url_for('bills.create_bill_page') }}" class="nav-link">Create Bill</a>
+                <a href="{{ url_for('bills.pending_bills_page') }}" class="nav-link">Pending Bills</a>
+                <a href="{{ url_for('bills.completed_bills_page') }}" class="nav-link">Completed Bills</a>
+                {% if current_user.role == 'admin' %}
+                <a href="{{ url_for('menu.manage_menu') }}" class="nav-link">Manage Menu</a>
+                <a href="{{ url_for('users.staff_management') }}" class="nav-link">Staff</a>
+                {% endif %}
+                <a href="{{ url_for('reports.reports_page') }}" class="nav-link">Reports</a>
+                <form action="{{ url_for('auth.logout') }}" method="post" class="inline-form">
+                    <button type="submit" class="btn btn-light">Logout</button>
+                </form>
+            </nav>
+        </header>
+        {% endif %}
+
+        <main class="main-content">
+            <div id="notification-container" class="notification-container" aria-live="polite"></div>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div class="flash-container">
+                {% for category, message in messages %}
+                <div class="flash flash-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% endwith %}
+
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>
+

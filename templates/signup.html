@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}Sign up - Cafe POS{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper">
+    <div class="auth-card">
+        <h1 class="auth-title">Create your cafe</h1>
+        <p class="auth-subtitle">Set up a new business account</p>
+        <form method="post" action="{{ url_for('auth.signup') }}" class="auth-form">
+            <label class="field-label">Business name</label>
+            <input type="text" name="business_name" required class="field-input" placeholder="Sunrise Cafe">
+
+            <label class="field-label">Owner name</label>
+            <input type="text" name="owner_name" required class="field-input" placeholder="Alex Johnson">
+
+            <label class="field-label">Email</label>
+            <input type="email" name="email" required class="field-input" placeholder="owner@cafe.com">
+
+            <label class="field-label">Password</label>
+            <input type="password" name="password" required class="field-input" placeholder="••••••••">
+
+            <button type="submit" class="btn btn-primary btn-full">Create account</button>
+        </form>
+        <p class="auth-footer-text">
+            Already registered? <a href="{{ url_for('auth.login') }}">Login instead</a>
+        </p>
+    </div>
+</div>
+{% endblock %}
+

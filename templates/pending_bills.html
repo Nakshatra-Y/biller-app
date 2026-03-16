@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}Pending Bills - Cafe POS{% endblock %}
+
+{% block content %}
+<section class="list-page">
+    <div class="page-header">
+        <h1>Pending Bills</h1>
+        <p>Open bills waiting to be completed.</p>
+    </div>
+    <div class="card">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Bill ID</th>
+                    <th>Table</th>
+                    <th>Total</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for b in bills %}
+                <tr data-bill-id="{{ b.id }}">
+                    <td>#{{ b.id }}</td>
+                    <td>{{ b.table_no }}</td>
+                    <td>₹{{ '%.2f'|format(b.total) }}</td>
+                    <td>{{ b.created_at.strftime('%H:%M') }}</td>
+                    <td>
+                        <button class="btn btn-small btn-secondary js-view-bill" data-id="{{ b.id }}">Edit</button>
+                        <button class="btn btn-small btn-primary js-complete-bill" data-id="{{ b.id }}">Complete</button>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="empty-state">No pending bills.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<div id="billModal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content modal-content-wide">
+        <h2 id="billModalTitle">Bill details</h2>
+        <div id="billModalBody"></div>
+        <div id="billModalEditable" class="hidden">
+            <table class="data-table">
+                <thead><tr><th>Item</th><th>Qty</th><th>Subtotal</th><th></th></tr></thead>
+                <tbody id="billModalItemsBody"></tbody>
+            </table>
+            <div class="modal-add-item-row">
+                <label class="field-label">Add Item</label>
+                <div class="modal-add-item-controls">
+                    <select id="modalAddCategory" class="field-input">
+                        <option value="">Category</option>
+                        {% for c in categories %}
+                        <option value="{{ c.id }}">{{ c.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <select id="modalAddProduct" class="field-input">
+                        <option value="">Product</option>
+                        {% for p in products %}
+                        <option value="{{ p.id }}" data-name="{{ p.name }}" data-price="{{ '%.2f'|format(p.price) }}" data-category="{{ p.category_id }}">{{ p.name }} – ₹{{ '%.2f'|format(p.price) }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="button" id="modalAddItemBtn" class="btn btn-primary">Add</button>
+                </div>
+            </div>
+            <div class="bill-total-row bill-total" style="margin-top:8px;"><span>Total</span><span id="billModalTotal">₹0.00</span></div>
+            <div class="modal-actions">
+                <button id="billModalSave" class="btn btn-primary">Save changes</button>
+                <button id="billModalComplete" class="btn btn-primary">Complete bill</button>
+            </div>
+        </div>
+        <div id="billModalViewOnly" class="hidden">
+            <div id="billModalViewContent"></div>
+            <div class="modal-actions">
+                <button id="billModalPrint" class="btn btn-secondary">Print receipt</button>
+            </div>
+        </div>
+        <button id="closeBillModal" class="btn btn-secondary" style="margin-top:8px;">Close</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>window.POS_PAGE = 'pending';</script>
+<script src="{{ url_for('static', filename='js/billing.js') }}"></script>
+{% endblock %}
+

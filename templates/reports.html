@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics - Cafe POS{% endblock %}
+
+{% block content %}
+<section class="report-page">
+    <div class="page-header">
+        <h1>Sales Analytics</h1>
+        <p>Daily, weekly and monthly performance (admin only).</p>
+    </div>
+    <div class="report-grid">
+        <div class="card metric-card">
+            <div class="metric-label">Total Bills Today</div>
+            <div class="metric-value" id="m-total-bills">-</div>
+        </div>
+        <div class="card metric-card">
+            <div class="metric-label">Revenue Today</div>
+            <div class="metric-value currency" id="m-revenue-today">-</div>
+        </div>
+        <div class="card metric-card">
+            <div class="metric-label">Avg Bill Value</div>
+            <div class="metric-value currency" id="m-avg-bill">-</div>
+        </div>
+        <div class="card metric-card">
+            <div class="metric-label">Top Item</div>
+            <div class="metric-value small" id="m-top-item">-</div>
+        </div>
+        <div class="card metric-card">
+            <div class="metric-label">Most Active Table</div>
+            <div class="metric-value small" id="m-active-table">-</div>
+        </div>
+    </div>
+
+    <div class="card" style="margin-top:1.5rem;">
+        <h2>Revenue - Last 7 Days</h2>
+        <canvas id="revenueChart" height="120"></canvas>
+    </div>
+
+    <div class="card" style="margin-top:1.5rem;">
+        <h2>Top Selling Products (Last 30 days)</h2>
+        <canvas id="topProductsChart" height="120"></canvas>
+    </div>
+
+    <div class="dashboard-actions" style="margin-top:1.5rem;">
+        <button id="printReportBtn" class="btn btn-primary">Print / Save PDF</button>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", async () => {
+  const res = await fetch("/reports/metrics");
+  if (!res.ok) return;
+  const data = await res.json();
+  const daily = data.daily;
+  const series = data.series;
+  const cmp = data.comparisons;
+
+  const fmt = (n) => "₹" + Number(n || 0).toFixed(2);
+
+  document.getElementById("m-total-bills").textContent = daily.total_bills;
+  document.getElementById("m-revenue-today").textContent = fmt(daily.total_sales);
+  document.getElementById("m-avg-bill").textContent = fmt(daily.avg_bill);
+  document.getElementById("m-top-item").textContent = daily.top_item || "-";
+  document.getElementById("m-active-table").textContent = daily.most_active_table || "-";
+
+  const labels = series.daily_revenue.map((p) => p.label);
+  const revenues = series.daily_revenue.map((p) => p.revenue);
+
+  const revCtx = document.getElementById("revenueChart").getContext("2d");
+  new Chart(revCtx, {
+    type: "line",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: "Revenue",
+          data: revenues,
+          borderColor: "#ffb65c",
+          backgroundColor: "rgba(255,182,92,0.2)",
+          tension: 0.3,
+        },
+      ],
+    },
+    options: {
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { ticks: { callback: (v) => "₹" + v } },
+      },
+    },
+  });
+
+  const tpLabels = series.top_products.map((p) => p.name);
+  const tpValues = series.top_products.map((p) => p.quantity);
+  const tpCtx = document.getElementById("topProductsChart").getContext("2d");
+  new Chart(tpCtx, {
+    type: "bar",
+    data: {
+      labels: tpLabels,
+      datasets: [
+        {
+          label: "Qty sold",
+          data: tpValues,
+          backgroundColor: "#ff8a4a",
+        },
+      ],
+    },
+    options: {
+      plugins: { legend: { display: false } },
+    },
+  });
+
+  document.getElementById("printReportBtn").addEventListener("click", () => {
+    window.print();
+  });
+});
+</script>
+{% endblock %}
+

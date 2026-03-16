@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+
+{% block title %}Create Bill - Cafe POS{% endblock %}
+
+{% block content %}
+<div class="pos-layout pos-layout-3col">
+    <!-- Left column: tables + categories -->
+    <aside class="pos-sidebar pos-sidebar-left">
+        <h2 class="sidebar-title">Tables</h2>
+        <div id="tableGrid" class="table-grid">
+            {% for t in tables %}
+            {% set status = table_statuses.get(t.table_number, 'available') %}
+            {% set card_class = 'table-available' if status == 'available' else 'table-occupied' %}
+            {% set label = 'Empty' if status == 'available' else ('Pending' if status == 'pending' else 'Occupied') %}
+            <button type="button" class="table-card {{ card_class }}" data-table-id="{{ t.id }}" data-table="{{ t.table_number }}" data-status="{{ status }}">
+                <span class="table-card-edit" title="Edit table" aria-label="Edit table">&#9998;</span>
+                <div class="table-number">Table {{ t.table_number }}</div>
+                <div class="table-status">{{ label }}</div>
+            </button>
+            {% endfor %}
+            <button type="button" id="addTableCard" class="table-card table-add-card" title="Add table">
+                <div class="table-number">+ Add Table</div>
+            </button>
+        </div>
+
+        <h2 class="sidebar-title" style="margin-top:1rem;">Categories</h2>
+        <div id="categoryList" class="category-grid">
+            <button type="button" class="category-card active" data-category="all">All</button>
+            {% for c in categories %}
+            <button type="button" class="category-card" data-category="{{ c.id }}">{{ c.name }}</button>
+            {% endfor %}
+            <button type="button" id="addCategoryCard" class="category-card category-add-card" title="Add category">+ Add Category</button>
+        </div>
+    </aside>
+
+    <!-- Center column: product search + grid -->
+    <section class="pos-main pos-main-center">
+        <div class="section-header">
+            <h2 class="section-title">Products</h2>
+            <input id="productSearch" type="text" class="field-input" placeholder="Search products...">
+        </div>
+        <div id="productGrid" class="product-grid">
+            {% for p in products %}
+            <div class="product-card"
+                 data-id="{{ p.id }}"
+                 data-name="{{ p.name }}"
+                 data-price="{{ '%.2f'|format(p.price) }}"
+                 data-category="{{ p.category_id }}">
+                <div class="product-name">{{ p.name }}</div>
+                <div class="product-price">₹{{ '%.2f'|format(p.price) }}</div>
+                <button class="btn btn-small btn-primary product-add-btn" data-id="{{ p.id }}">Add</button>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- Right column: current bill summary -->
+    <aside class="pos-sidebar pos-sidebar-right">
+        <div class="current-bill-panel">
+            <h3>Current Bill</h3>
+            <div class="bill-summary">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Qty</th>
+                            <th>Subtotal</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="billItemsBody">
+                    </tbody>
+                </table>
+                <div class="bill-totals">
+                    <div class="bill-total-row">
+                        <span>Subtotal</span>
+                        <span id="billSubtotal">₹0.00</span>
+                    </div>
+                    <div class="bill-total-row">
+                        <span>GST %</span>
+                        <input id="gstInput" type="number" min="0" max="50" step="0.5" class="field-input" value="0">
+                    </div>
+                    <div class="bill-total-row bill-total">
+                        <span>Total</span>
+                        <span id="billTotal">₹0.00</span>
+                    </div>
+                </div>
+                <div class="bill-actions">
+                    <button id="printBillBtn" class="btn btn-secondary btn-full">Print bill</button>
+                    <button id="saveBillBtn" class="btn btn-primary btn-full">Save bill (Enter)</button>
+                </div>
+            </div>
+        </div>
+    </aside>
+</div>
+
+<div id="billModal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content modal-content-wide">
+        <h2 id="billModalTitle">Bill details</h2>
+        <div id="billModalBody"></div>
+        <div id="billModalEditable" class="hidden">
+            <table class="data-table">
+                <thead><tr><th>Item</th><th>Qty</th><th>Subtotal</th><th></th></tr></thead>
+                <tbody id="billModalItemsBody"></tbody>
+            </table>
+            <div class="bill-total-row bill-total" style="margin-top:8px;"><span>Total</span><span id="billModalTotal">₹0.00</span></div>
+            <div class="modal-actions">
+                <button id="billModalSave" class="btn btn-primary">Save changes</button>
+                <button id="billModalComplete" class="btn btn-primary">Complete bill</button>
+            </div>
+        </div>
+        <div id="billModalViewOnly" class="hidden">
+            <div id="billModalViewContent"></div>
+        </div>
+        <button id="closeBillModal" class="btn btn-secondary" style="margin-top:8px;">Close</button>
+    </div>
+</div>
+
+<div id="editTableModal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+        <h2>Edit Table</h2>
+        <label class="field-label">Table number</label>
+        <input type="text" id="editTableInput" class="field-input" placeholder="Table number">
+        <div class="modal-actions" style="margin-top:0.75rem;">
+            <button type="button" id="editTableSave" class="btn btn-primary">Save</button>
+            <button type="button" id="editTableCancel" class="btn btn-secondary">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<div id="addTableModal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+        <h2>Add Table</h2>
+        <label class="field-label">Table number</label>
+        <input type="text" id="addTableInput" class="field-input" placeholder="Table number">
+        <div class="modal-actions" style="margin-top:0.75rem;">
+            <button type="button" id="addTableSubmit" class="btn btn-primary">Add</button>
+            <button type="button" id="addTableCancel" class="btn btn-secondary">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<div id="addCategoryModal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+        <h2>Add Category</h2>
+        <label class="field-label">Category name</label>
+        <input type="text" id="addCategoryInput" class="field-input" placeholder="Category name">
+        <div class="modal-actions" style="margin-top:0.75rem;">
+            <button type="button" id="addCategorySubmit" class="btn btn-primary">Add</button>
+            <button type="button" id="addCategoryCancel" class="btn btn-secondary">Cancel</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/billing.js') }}"></script>
+{% endblock %}
+

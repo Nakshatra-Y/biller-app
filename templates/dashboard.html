@@ -1,0 +1,169 @@
+<style>
+
+    .profile-card{
+    background:rgba(255,255,255,0.03);
+    border-radius:12px;
+    padding:30px;
+    max-width:900px;
+    margin:auto;
+    }
+    
+    .profile-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:20px 30px;
+    margin-bottom:25px;
+    }
+    
+    .field{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    }
+    
+    .field-label{
+    font-size:13px;
+    opacity:0.8;
+    }
+    
+    .profile-input{
+    background:#0f0f0f;
+    border:1px solid rgba(255,255,255,0.08);
+    border-radius:8px;
+    padding:12px;
+    color:white;
+    font-size:14px;
+    }
+    
+    .profile-input:focus{
+    outline:none;
+    border-color:#ff9f4a;
+    }
+    
+    .profile-save{
+    background:#ff9f4a;
+    border:none;
+    padding:12px 24px;
+    border-radius:8px;
+    cursor:pointer;
+    font-weight:600;
+    font-size:14px;
+    }
+    
+    .profile-save:hover{
+    background:#ff8a2b;
+    }
+    
+    .profile-actions{
+    display:flex;
+    justify-content:flex-end;
+    }
+    
+    </style>
+
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Cafe POS{% endblock %}
+
+{% block content %}
+<section class="dashboard">
+    <div class="dashboard-header">
+        <h1>Today at your cafe</h1>
+        <p>Quick overview of activity and sales.</p>
+    </div>
+
+    <div class="dashboard-grid">
+        <div class="card metric-card">
+            <div class="metric-label">Pending bills</div>
+            <div class="metric-value">{{ pending_count }}</div>
+        </div>
+
+        <div class="card metric-card">
+            <div class="metric-label">Completed bills</div>
+            <div class="metric-value">{{ completed_count }}</div>
+        </div>
+
+        {% if today_report %}
+        <div class="card metric-card">
+            <div class="metric-label">Today's sales</div>
+            <div class="metric-value currency">
+                ₹{{ '%.2f'|format(today_report.total_sales if today_report.total_sales is not none else 0) }}
+            </div>
+        </div>
+
+        <div class="card metric-card">
+            <div class="metric-label">Top item</div>
+            <div class="metric-value small">{{ today_report.top_item or 'N/A' }}</div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="dashboard-actions">
+        <a href="{{ url_for('bills.create_bill_page') }}" class="btn btn-primary">Start new bill</a>
+        <a href="{{ url_for('bills.pending_bills_page') }}" class="btn btn-secondary">View pending bills</a>
+    </div>
+</section>
+
+
+<section class="dashboard" style="margin-top:1.5rem;">
+    <div class="dashboard-header">
+        <h1>Shop profile</h1>
+        <p>Update your cafe details.</p>
+    </div>
+
+    {% if current_user.role == 'admin' %}
+    <div class="card">
+
+        <div class="profile-card">
+            <form method="post">
+            
+            <div class="profile-grid">
+            
+            <div class="field">
+            <label class="field-label">Shop Name</label>
+            <input type="text" name="shop_name" class="profile-input"
+            value="{{ profile.shop_name if profile else '' }}">
+            </div>
+            
+            <div class="field">
+            <label class="field-label">Owner Name</label>
+            <input type="text" name="owner_name" class="profile-input"
+            value="{{ profile.owner_name if profile else '' }}">
+            </div>
+            
+            <div class="field">
+            <label class="field-label">Email Address</label>
+            <input type="email" name="email" class="profile-input"
+            value="{{ profile.email if profile else current_user.email }}">
+            </div>
+            
+            <div class="field">
+            <label class="field-label">Phone Number</label>
+            <input type="text" name="phone" class="profile-input"
+            value="{{ profile.phone if profile else '' }}">
+            </div>
+            
+            <div class="field" style="grid-column: span 2;">
+            <label class="field-label">Shop Address</label>
+            <input type="text" name="address" class="profile-input"
+            value="{{ profile.address if profile else '' }}">
+            </div>
+            
+            </div>
+            
+            <div class="profile-actions">
+            <button class="profile-save">Save Profile</button>
+            </div>
+            
+            </form>
+            </div>
+
+    </div>
+
+    {% else %}
+    <p>Only admins can edit the shop profile.</p>
+    {% endif %}
+</section>
+
+{% endblock %}
+

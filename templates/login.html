@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Login - Cafe POS{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper">
+    <div class="auth-card">
+        <h1 class="auth-title">Welcome back</h1>
+        <p class="auth-subtitle">Sign in to your cafe dashboard</p>
+        <form method="post" action="{{ url_for('auth.login') }}" class="auth-form">
+            <label class="field-label">Email</label>
+            <input type="email" name="email" required class="field-input" placeholder="you@cafe.com">
+
+            <label class="field-label">Password</label>
+            <input type="password" name="password" required class="field-input" placeholder="••••••••">
+
+            <button type="submit" class="btn btn-primary btn-full">Login</button>
+        </form>
+        <p class="auth-footer-text">
+            New cafe? <a href="{{ url_for('auth.signup') }}">Create your account</a>
+        </p>
+    </div>
+</div>
+{% endblock %}
+

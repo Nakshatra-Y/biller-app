@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}Staff Management - Cafe POS{% endblock %}
+
+{% block content %}
+<section class="list-page">
+    <div class="page-header">
+        <h1>Staff Users</h1>
+        <p>Add and manage staff for this cafe.</p>
+    </div>
+    <div class="card">
+        <h2>Add staff</h2>
+        <form method="post" class="form-grid">
+            <input type="text" name="name" placeholder="Full name" class="field-input" required>
+            <input type="email" name="email" placeholder="Email" class="field-input" required>
+            <input type="password" name="password" placeholder="Temporary password" class="field-input" required>
+            <select name="role" class="field-input">
+                <option value="staff">Staff</option>
+                <option value="admin">Admin</option>
+            </select>
+            <button type="submit" class="btn btn-primary">Create user</button>
+        </form>
+    </div>
+
+    <div class="card">
+        <h2>Existing users</h2>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in users %}
+                <tr>
+                    <td>{{ u.name }}</td>
+                    <td>{{ u.email }}</td>
+                    <td>{{ u.role|capitalize }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="3" class="empty-state">No staff yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}
+

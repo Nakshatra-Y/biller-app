@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Bill #{{ bill.id }}</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: 'Courier New', monospace; font-size: 14px; max-width: 320px; margin: 0 auto; padding: 16px; background: #fff; color: #000; }
+        .receipt-header { text-align: center; margin-bottom: 8px; }
+        .receipt-header h1 { margin: 0; font-size: 18px; font-weight: bold; }
+        .receipt-header .address { margin: 4px 0; white-space: pre-line; }
+        .receipt-header .datetime { margin: 4px 0; }
+        .receipt-header .table-bill { margin: 6px 0; font-weight: bold; }
+        .dash { border: none; border-top: 1px dashed #000; margin: 10px 0; }
+        .items { width: 100%; }
+        .items tr { vertical-align: top; }
+        .items .left { text-align: left; padding: 2px 0; }
+        .items .right { text-align: right; padding: 2px 0; white-space: nowrap; }
+        .items .qty-name { }
+        .summary { width: 100%; margin-top: 8px; }
+        .summary .label { text-align: left; padding: 2px 0; }
+        .summary .value { text-align: right; padding: 2px 0; white-space: nowrap; }
+        .summary .total-row { font-weight: bold; margin-top: 4px; padding-top: 4px; border-top: 1px solid #000; }
+        @media print { body { padding: 8px; } .no-print { display: none; } }
+    </style>
+</head>
+<body>
+    <div class="receipt-header">
+        <h1>{{ shop_name }}</h1>
+        {% if address %}
+        <div class="address">{{ address }}</div>
+        {% endif %}
+        <div class="datetime">{{ (bill.completed_at or bill.created_at).strftime('%m/%d/%y at %I:%M:%S %p') }}</div>
+        <div class="table-bill">Table No. <strong>{{ bill.table_no }}</strong>  Bill No. {{ bill.id }}</div>
+    </div>
+    <hr class="dash">
+    <table class="items">
+        {% for i in bill.items %}
+        <tr>
+            <td class="left qty-name">{{ i.quantity }} x {{ i.product_name }}</td>
+            <td class="right">₹ {{ '%.2f'|format(i.price * i.quantity) }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    <hr class="dash">
+    <table class="summary">
+        <tr>
+            <td class="label">SUBTOTAL</td>
+            <td class="value">₹ {{ '%.2f'|format(subtotal) }}</td>
+        </tr>
+        <tr>
+            <td class="label">TAX</td>
+            <td class="value">₹ {{ '%.2f'|format(tax) }}</td>
+        </tr>
+        <tr>
+            <td class="label">GRATUITY</td>
+            <td class="value">₹ 0.00</td>
+        </tr>
+        <tr class="total-row">
+            <td class="label">TOTAL</td>
+            <td class="value">₹ {{ '%.2f'|format(bill.total) }}</td>
+        </tr>
+    </table>
+    <p class="no-print" style="margin-top:16px; text-align:center;">
+        <button onclick="window.print();">Print</button>
+        <button onclick="window.close();">Close</button>
+    </p>
+    <script>window.onload = function() { window.print(); }</script>
+</body>
+</html>
