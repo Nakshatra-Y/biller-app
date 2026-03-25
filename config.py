@@ -9,9 +9,17 @@ class Config:
     db_url = os.environ.get("DATABASE_URL")
     if db_url and db_url.startswith("postgres://"):
         db_url = db_url.replace("postgres://", "postgresql://", 1)
+        
     SQLALCHEMY_DATABASE_URI = db_url or f"sqlite:///{os.path.join(BASE_DIR, 'biller.db')}"
-
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
+    if SQLALCHEMY_DATABASE_URI.startswith("sqlite"):
+        logger.warning("Using SQLite database. Data will be lost on restart. Please configure DATABASE_URL for PostgreSQL.")
+    else:
+        logger.info("Using PostgreSQL database.")
 
 
 class DevConfig(Config):

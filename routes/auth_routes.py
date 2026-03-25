@@ -13,8 +13,13 @@ from flask import (
 )
 from werkzeug.security import generate_password_hash
 
+import logging
+
 from database.db import db
 from database.models import Business, User, CafeTable
+
+logger = logging.getLogger(__name__)
+
 
 
 auth_bp = Blueprint("auth", __name__)
@@ -95,6 +100,10 @@ def signup():
     db.session.add(business)
     db.session.flush()
 
+    logger.info(f"Registering business {business.name} with email {email}")
+
+
+
     user = User(
         business_id=business.id,
         name=owner_name,
@@ -107,7 +116,13 @@ def signup():
     default_tables = [CafeTable(business_id=business.id, table_number=str(i)) for i in range(1, 6)]
     db.session.add_all(default_tables)
 
-    db.session.commit()
+    try:
+        db.session.commit()
+        logger.info(f"Successfully registered user and business: {email}")
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error registering user {email}: {e}")
+        raise
 
     session["user_id"] = user.id
     session["business_id"] = business.id
@@ -115,6 +130,7 @@ def signup():
     if request.is_json:
         return jsonify({"message": "Signup successful"}), 201
     return redirect(url_for("bills.dashboard"))
+
 
 
 @auth_bp.route("/login", methods=["GET", "POST"])
@@ -128,20 +144,31 @@ def login():
 
     if not (email and password):
         msg = "Email and password are required."
+        logger.warning("Login failed: Missing email or password.")
         if request.is_json:
             return jsonify({"error": msg}), 400
         flash(msg, "error")
         return render_template("login.html"), 400
 
     # owner email is stored at business level; staff have their own emails
-    user = User.query.join(Business, User.business_id == Business.id).filter(User.email == email).first()
-    if not user or not user.check_password(password):
+    user = User.query.filter(User.email == email).first()
+    if not user:
+        logger.warning(f"Login failed: No user found for email '{email}'.")
         msg = "Invalid credentials."
         if request.is_json:
             return jsonify({"error": msg}), 401
         flash(msg, "error")
         return render_template("login.html"), 401
 
+    if not user.check_password(password):
+        logger.warning(f"Login failed: Incorrect password for email '{email}'.")
+        msg = "Invalid credentials."
+        if request.is_json:
+            return jsonify({"error": msg}), 401
+        flash(msg, "error")
+        return render_template("login.html"), 401
+
+    logger.info(f"User '{email}' logged in successfully.")
     session["user_id"] = user.id
     session["business_id"] = user.business_id
 
