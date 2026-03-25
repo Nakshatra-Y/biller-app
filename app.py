@@ -17,6 +17,9 @@ def create_app():
     app = Flask(__name__, static_folder="static", template_folder="templates")
     app.config.from_object(get_config())
 
+    with app.app_context():
+    db.create_all()
+
     # simple upload folder for shop logos/images
     app.config.setdefault("UPLOAD_FOLDER", "static/uploads")
 
@@ -45,5 +48,3 @@ app = create_app()
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
 
-with app.app_context():
-    db.create_all()
