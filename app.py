@@ -17,9 +17,6 @@ def create_app():
     app = Flask(__name__, static_folder="static", template_folder="templates")
     app.config.from_object(get_config())
 
-    with app.app_context():
-    db.create_all()
-
     # simple upload folder for shop logos/images
     app.config.setdefault("UPLOAD_FOLDER", "static/uploads")
 
