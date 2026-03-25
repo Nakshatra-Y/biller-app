@@ -36,12 +36,6 @@ def create_app():
     def index():
         return redirect(url_for("auth.login"))
 
-    @app.route("/check-db")
-    def check_db():
-        from database.models import User
-        users = User.query.all()
-        return f"Users count: {len(users)}"
-
     return app
 
 
